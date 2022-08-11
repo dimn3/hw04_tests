@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from posts.models import Group, Post
 
 User = get_user_model()
@@ -10,11 +11,17 @@ class PagesTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.guest_client = Client()
+        cls.user = User.objects.create_user(username='HasNoName')
+        cls.authorized_client = Client()
+        cls.authorized_client.force_login(cls.user)
         cls.author = User.objects.create_user(
             username='avtor',
             first_name='valerka',
             last_name='ivanich',
         )
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
         cls.group = Group.objects.create(
             title='asd',
             slug='1',
@@ -26,20 +33,6 @@ class PagesTests(TestCase):
             text='haha',
             id=1
         )
-        cls.url_edit = reverse(
-            'posts:post_edit',
-            kwargs={
-                'post_id': cls.post.id,
-            }
-        )
-    
-    def setUp(self):
-        self.guest_client = Client()
-        self.user = User.objects.create_user(username='HasNoName')
-        self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
-        self.author_client = Client()
-        self.author_client.force_login(self.author)
 
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
@@ -69,37 +62,42 @@ class PagesTests(TestCase):
             with self.subTest(template=template):
                 self.assertTemplateUsed(reverse_name, template)
 
-    def test_post_edit_uses_correct_tmp(self):
+    def test_edit_view(self):
         template = 'posts/create_post.html'
-        reversed = self.author_client.get(
+        reverse_name = self.author_client.get(
             reverse('posts:post_edit', kwargs={'post_id': '1'})
         )
         with self.subTest(template=template):
-            self.assertTemplateUsed(template, reversed)
+            self.assertTemplateUsed(reverse_name, template)
 
         # Проверяем контексты вьюх
     def test_views_get_correct_contexts(self):
         '''views contexts tests'''
         responses_and_contexts = {
             self.authorized_client.
-            get(reverse('posts:group_list', kwargs={'slug': '1'})).
-            context['group']: self.group,
+            get(reverse(
+                'posts:group_list', kwargs={'slug': '1'})).context['group']:
+            self.group,
 
             self.authorized_client.
             get(reverse('posts:profile', kwargs={'username': 'avtor'})).
-            context['counter']: 1,
+            context['counter']:
+            1,
 
             self.authorized_client.
             get(reverse('posts:profile', kwargs={'username': 'avtor'})).
-            context['author']: self.author,
+            context['author']:
+            self.author,
 
             self.authorized_client
             .get(reverse('posts:post_detail', kwargs={'post_id': '1'})).
-            context['post']: self.post,
+            context['post']:
+            self.post,
 
             self.authorized_client
             .get(reverse('posts:post_detail', kwargs={'post_id': '1'})).
-            context['counter']: 1,
+            context['counter']:
+            1,
         }
         for response, context in responses_and_contexts.items():
             with self.subTest(response=response):

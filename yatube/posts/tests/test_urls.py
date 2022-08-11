@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
+
 from posts.models import Group, Post
 
 User = get_user_model()
@@ -28,14 +29,12 @@ class URLTests(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.author,
+            group=cls.group,
             text='haha',
             id=1
         )
         cls.url_edit = reverse(
-            'posts:post_edit',
-            kwargs={
-                'post_id': cls.post.id,
-            }
+            'posts:post_edit', kwargs={'post_id': cls.post.id}
         )
 
     # Проверяем общедоступные страницы
