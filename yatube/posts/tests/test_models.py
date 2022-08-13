@@ -23,9 +23,9 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        self.text = PostModelTest.post.text[:15]
+        self.text = self.post.text[:15]
         text_str = str(self.post)
-        self.title = PostModelTest.group.title
+        self.title = self.group.title
         title_str = str(self.group)
         self.assertEqual(
             self.text, text_str,
@@ -37,7 +37,7 @@ class PostModelTest(TestCase):
 
     def test_models_post_verbose_name(self):
         """Проверяем verbose_name модели Post"""
-        post = PostModelTest.post
+        post = self.post
         verbose_text = post._meta.get_field('text').verbose_name
         verbose_text_must = 'Текст поста'
         verbose_pubdate = post._meta.get_field('pub_date').verbose_name
@@ -61,7 +61,7 @@ class PostModelTest(TestCase):
 
     def test_models_post_help_text(self):
         """Проверяем verbose_name модели Post"""
-        post = PostModelTest.post
+        post = self.post
         help_text_post = post._meta.get_field('text').help_text
         help_text_post_must = 'Введите текст поста'
         help_text_group = post._meta.get_field('group').help_text

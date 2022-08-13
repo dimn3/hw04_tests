@@ -49,16 +49,18 @@ class PostCreateFormTests(TestCase):
                 'posts:profile', kwargs={'username': self.author}
             )
         )
-        post_created = Post.objects.order_by('-pub_date').first()
+        post_created = Post.objects.first()
         self.assertEqual(posts_count + 1, Post.objects.count())
-        self.assertEqual(post_created.text, 'testtext')
-        self.assertEqual(post_created.id, self.post.id + 1)
+        self.assertEqual(post_created.text, form_data['text'])
+        self.assertEqual(post_created.author, self.author)
+        self.assertEqual(post_created.group, self.group)
 
     def test_edit_post(self):
         post_for_edit = Post.objects.create(
             author=self.author,
             text='textforedit',
         )
+        posts_count = Post.objects.count()
         form_data = {
             'text': 'editedtext',
             'group': self.group.id
@@ -74,18 +76,24 @@ class PostCreateFormTests(TestCase):
             )
         )
         edited_post = Post.objects.get(id=post_for_edit.id)
-        self.assertEqual(edited_post.text, 'editedtext')
+        self.assertEqual(edited_post.text, form_data['text'])
+        self.assertEqual(edited_post.author, self.author)
+        self.assertEqual(edited_post.group, self.group)
+        self.assertEqual(posts_count, Post.objects.count())
 
     def test_create_post_for_unlog_user(self):
+        reverse_login = reverse('users:login')
+        reverse_create = reverse('posts:post_create')
         posts_count = Post.objects.count()
         form_data = {
             'text': 'testcreate',
             'group': self.group.id
         }
-        response = Client().post(
+        response = self.guest_client.post(
             reverse('posts:post_create'),
             data=form_data,
         )
         self.assertRedirects(
-            response, '/auth/login/?next=/create/')
+            response, f'{reverse_login}?next={reverse_create}'
+        )
         self.assertEqual(posts_count, Post.objects.count())

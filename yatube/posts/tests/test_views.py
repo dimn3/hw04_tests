@@ -44,7 +44,7 @@ class PagesTests(TestCase):
                 reverse('posts:index')
             ),
             'posts/group_list.html': self.authorized_client.get(
-                reverse('posts:group_list', kwargs={'slug': self.post.id})
+                reverse('posts:group_list', kwargs={'slug': self.group.slug})
             ),
             'posts/profile.html': (
                 self.authorized_client.get(
@@ -77,67 +77,49 @@ class PagesTests(TestCase):
         with self.subTest(template=template):
             self.assertTemplateUsed(reverse_name, template)
 
-        # Проверяем контексты вьюх
-    def test_views_get_correct_contexts(self):
-        '''views contexts tests'''
-
-        counter = Post.objects.filter(author=self.author).count()
-        responses_and_contexts = {
-            self.authorized_client.
-            get(
-                reverse(
-                    'posts:group_list', kwargs={'slug': self.group.slug}
-                )
-            ).
-            context['group']:
-            self.group,
-
-            self.authorized_client.
-            get(
-                reverse(
-                    'posts:profile',
-                    kwargs={'username': self.author.username}
-                )
-            ).
-            context['counter']:
-            counter,
-
-            self.authorized_client.
-            get(
-                reverse(
-                    'posts:profile', kwargs={'username': self.author.username}
-                )
-            ).
-            context['author']:
-            self.author,
-
-            self.authorized_client
-            .get(
-                reverse(
-                    'posts:post_detail',
-                    kwargs={'post_id': self.post.id}
-                )
-            ).
-            context['post']:
-            self.post,
-
-            self.authorized_client
-            .get(
-                reverse(
-                    'posts:post_detail', kwargs={'post_id': self.post.id}
-                )
-            ).
-            context['counter']:
-            1,
-        }
-        for response, context in responses_and_contexts.items():
-            with self.subTest(response=response):
-                self.assertEqual(response, context)
-
-    def test_post_correct_group(self):
+    def test_post_correct_group_(self):
         self.assertEqual(self.post.group, self.group)
 
+    def test_view_group_list_context(self):
+        response = self.authorized_client.get(
+            reverse(
+                'posts:group_list', kwargs={'slug': self.group.slug}
+            )
+        )
+        self.assertEqual(response.context['group'], self.group)
 
+    def test_view_profile_context(self):
+        counter = Post.objects.filter(author=self.author).count()
+        response = self.authorized_client.get(
+            reverse(
+                'posts:profile',
+                kwargs={'username': self.author.username}
+            )
+        )
+        self.assertEqual(response.context['counter'], counter)
+        self.assertEqual(response.context['author'], self.author)
+
+    def test_view_post_detail(self):
+        counter = Post.objects.filter(author=self.author).count()
+        response_post = self.authorized_client.get(
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}
+            )
+        )
+        response_counter = self.authorized_client.get(
+            reverse(
+                'posts:post_detail',
+                kwargs={'post_id': self.post.id}
+            )
+        )
+        self.assertEqual(response_post.context['post'], self.post)
+        self.assertEqual(response_counter.context['counter'], counter)
+        self.assertEqual(response_post.context['post'].group, self.group)
+        self.assertEqual(
+            response_post.context['post'].text, self.post.text
+        )
+        self.assertEqual(response_post.context['post'].author, self.author)
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
@@ -167,7 +149,7 @@ class PaginatorViewsTest(TestCase):
                 group=cls.group
             )
             cls.post_list.append(post_save)
-        cls.post = Post.objects.bulk_create(cls.post_list)
+        Post.objects.bulk_create(cls.post_list)
 
     def test_first_page_contains_ten_records(self):
         response = self.guest_client.get(reverse('posts:index'))
@@ -175,9 +157,9 @@ class PaginatorViewsTest(TestCase):
         self.assertEqual(len(response.context['page_obj']), POSTS_PER_PAGE)
 
     def test_second_page_contains_three_records(self):
-        # Проверка: на второй странице должно быть три поста.
+        # Проверка: на второй странице должно быть четыре поста.
         response = self.client.get(reverse('posts:index') + '?page=2')
         self.assertEqual(
-            len(response.context['page_obj']) % POSTS_PER_PAGE,
+            len(response.context['page_obj']),
             len(self.post_list) % POSTS_PER_PAGE
         )
