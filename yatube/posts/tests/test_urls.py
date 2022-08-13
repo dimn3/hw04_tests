@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -31,11 +33,13 @@ class URLTests(TestCase):
             author=cls.author,
             group=cls.group,
             text='haha',
-            id=1
         )
         cls.url_edit = reverse(
             'posts:post_edit', kwargs={'post_id': cls.post.id}
         )
+        cls.url_post = f'/posts/{cls.post.id}/'
+        cls.url_group = f'/group/{cls.group.slug}/'
+        cls.url_profile = f'/profile/{cls.user.username}/'
 
     # Проверяем общедоступные страницы
     def test_urls_for_unauth_users(self):
@@ -43,41 +47,41 @@ class URLTests(TestCase):
 
         addresses = {
             self.guest_client.get('/'),
-            self.guest_client.get('/group/1/'),
-            self.guest_client.get('/profile/HasNoName/'),
-            self.guest_client.get('/posts/1/'),
+            self.guest_client.get(self.url_group),
+            self.guest_client.get(self.url_profile),
+            self.guest_client.get(self.url_post),
         }
         for address in addresses:
             with self.subTest(address=address):
                 status_code = address.status_code
-                self.assertEqual(status_code, 200)
+                self.assertEqual(status_code, HTTPStatus.OK)
 
     # Проверяем,что вернется ошибка 404
     def test_unreal_url(self):
         """Ошибка 404"""
         status_code = self.guest_client.get('/hahahehehoho/').status_code
-        self.assertEqual(status_code, 404)
+        self.assertEqual(status_code, HTTPStatus.NOT_FOUND)
 
     # Проверяем,что страница create доступна авторизованному
     def test_create_page(self):
         """Create для авторизованного"""
         response = self.authorized_client.get('/create/')
         status = response.status_code
-        self.assertEqual(status, 200)
+        self.assertEqual(status, HTTPStatus.OK)
 
     # Проверяем,что страница edit доступна автору
     def test_edit_page(self):
         """edit для автора"""
         response = self.author_client.get(self.url_edit)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_templates_for_urls(self):
         """Шаблоны"""
         url_template = {
             self.guest_client.get('/'): 'posts/index.html',
-            self.guest_client.get('/group/1/'): 'posts/group_list.html',
-            self.guest_client.get('/profile/HasNoName/'): 'posts/profile.html',
-            self.guest_client.get('/posts/1/'): 'posts/post_detail.html',
+            self.guest_client.get(self.url_group): 'posts/group_list.html',
+            self.guest_client.get(self.url_profile): 'posts/profile.html',
+            self.guest_client.get(self.url_post): 'posts/post_detail.html',
             self.author_client.get(self.url_edit): 'posts/create_post.html',
             self.authorized_client.get('/create/'): 'posts/create_post.html',
         }

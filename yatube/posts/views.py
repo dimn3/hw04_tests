@@ -57,7 +57,7 @@ def post_detail(request, post_id):
     return render(request, 'posts/post_detail.html', context)
 
 
-@login_required(login_url="user:login")
+@login_required(login_url='users:login')
 def post_create(request):
     form = PostForm(request.POST or None)
 
@@ -70,7 +70,7 @@ def post_create(request):
     return render(request, 'posts/create_post.html', {'form': form})
 
 
-@login_required(login_url="user:login")
+@login_required(login_url='users:login')
 def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     is_edit = True

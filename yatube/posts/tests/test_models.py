@@ -23,16 +23,16 @@ class PostModelTest(TestCase):
 
     def test_models_have_correct_object_names(self):
         """Проверяем, что у моделей корректно работает __str__."""
-        text_must_be = PostModelTest.post.text[:15]
-        text_str = PostModelTest.post.__str__()
-        title_must_be = PostModelTest.group.title
-        title_str = PostModelTest.group.__str__()
+        self.text = PostModelTest.post.text[:15]
+        text_str = str(self.post)
+        self.title = PostModelTest.group.title
+        title_str = str(self.group)
         self.assertEqual(
-            text_must_be, text_str,
+            self.text, text_str,
             '__str__ у текста поста работает некорректно'
         )
         self.assertEqual(
-            title_must_be, title_str, '__str__ у групп работает некорректно'
+            self.title, title_str, '__str__ у групп работает некорректно'
         )
 
     def test_models_post_verbose_name(self):
