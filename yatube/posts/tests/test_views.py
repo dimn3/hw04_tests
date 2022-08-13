@@ -120,6 +120,8 @@ class PagesTests(TestCase):
             response_post.context['post'].text, self.post.text
         )
         self.assertEqual(response_post.context['post'].author, self.author)
+
+
 class PaginatorViewsTest(TestCase):
     @classmethod
     def setUpClass(cls):
